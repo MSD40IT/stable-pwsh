@@ -50,9 +50,7 @@ while ($Loop) {
     $ConfirmEntry = $null
     Clear-Host
         
-    # Gather input for variables and confirm each one before moving on
-    while ( $ConfirmEntry -ne 'y' ) {
-            
+    # Gather input for variables and confirm each one before moving on            
         $ticketNum = Read-Host -Prompt 'Enter a ticket number'
         $ticketPath = Join-Path -Path $DBLocationRoot -ChildPath $ticketNum
     
@@ -66,8 +64,8 @@ while ($Loop) {
     
         Write-Host -ForegroundColor Green "Ticket number is: $ticketNum"
 
-<#         $DBAvailable = Get-ChildItem -Path "$ticketPath" -Filter "Database.db" -Recurse
-        
+         $ProductList = Get-ChildItem -Path "$ticketPath" -Filter "Database.db" -Recurse
+<#        
          foreach ( $Folder in $DBAvailable ) {
             if ( ($_.directory) -like "*Inventory*" ) {
                 $InventoryDBFile = $DBAvailable | Where-Object { $_.Directory -like "*Inventory*" } | Select-Object -ExpandProperty FullName
@@ -77,9 +75,10 @@ while ($Loop) {
             }
         }  #> #>
 
-        if ( (($ProductList).count -eq 2)) {
+        if ( (($ProductList).count -gt 0)) {
             do {
-                Write-Host "================ Both Deploy and Inventory databases available ================"
+                #Write-Host "================ Both Deploy and Inventory databases available ================"
+                Write-Host ""
                 Write-Host " Press '1' for Deploy."
                 Write-Host " Press '2' for Inventory."
                 Write-Host " Press '3' for Both."
@@ -127,7 +126,6 @@ while ($Loop) {
             }
             until ($input -eq 'q')
         }
-    }
             
     while ( $ConfirmEntry -ne 'y' -and $ConfirmEntry -ne "n") {
         $ConfirmEntry = Read-Host -Prompt "Restore original database? (y/n)"
