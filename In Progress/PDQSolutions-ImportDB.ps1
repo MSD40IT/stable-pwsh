@@ -36,9 +36,9 @@ $InventoryService = "PDQInventory"
 $StandardDBName = "database.db"
 $BackupDBName = "database.db.old"
 $DBLocationRoot = "\\fs01\Support\"
-$DeployDB = "PDQDeploy\"
-$InventoryDB = "PDQInventory\"
-$LocalPDQfolder = "$env:ProgramData\Admin Arsenal\"
+$DeployDB = "PDQ Deploy"
+$InventoryDB = "PDQ Inventory"
+$LocalPDQfolder = "$env:ProgramData\Admin Arsenal"
 
 while ($Loop) {
     # Set variables for use later
@@ -88,7 +88,7 @@ while ($Loop) {
 
                 switch ($PickProduct) {
                     '1' {
-                        $Destination = "$LocalPDQfolder\$DeployDB"
+                        $Destination = "$LocalPDQfolder $DeployDB"
                         $Switch = "1"
                         cls
                         Write-Host "Importing Deploy database from $ticketPath"
@@ -116,10 +116,8 @@ while ($Loop) {
                         $DestinationI = "$LocalPDQfolder\$InventoryDB"
                         $Switch = "3"
                         cls
-                        return
                     } 'q (quit)' {
                         cls
-                        return
                     }
                 }
                 pause
