@@ -35,7 +35,7 @@ $InventoryService = "PDQInventory"
 
 $StandardDBName = "database.db"
 $BackupDBName = "database.db.old"
-$DBLocationRoot = "\\fs01\Support\"
+$DBLocationRoot = "\\fs01\Support"
 $DeployDB = "PDQ Deploy"
 $InventoryDB = "PDQ Inventory"
 $LocalPDQfolder = "$env:ProgramData\Admin Arsenal"
@@ -92,11 +92,11 @@ while ($Loop) {
                         $Switch = "1"
                         cls
                         Write-Host "Importing Deploy database from $ticketPath"
-                        Get-Process -Name "$DeployProcess" | Stop-Process
-                        Get-Service -Name "$DeployService" | Stop-Service
+                        Get-Process -Name "$DeployProcess" | Stop-Process -ErrorAction SilentlyContinue
+                        Get-Service -Name "$DeployService" | Stop-Service -ErrorAction SilentlyContinue
                         Rename-Item -Path "$Destination\$StandardDBName" -NewName $BackupDBName
-                        Copy-Item -Path $ticketPath -Destination $Destination -PassThru
-                        Get-Service -Name "$DeployService" | Start-Service
+                        Copy-Item -Path $ticketPath -Destination $Destination
+                        Get-Service -Name "$DeployService" | Start-Service -ErrorAction SilentlyContinue
                         Start-Process -FilePath "C:\Program Files (x86)\Admin Arsenal\PDQ Deploy\PDQDeployConsole.exe"
                         Write-Host "New database imported."
                     } '2' {
@@ -104,13 +104,14 @@ while ($Loop) {
                         $Switch = "2"
                         cls
                         Write-Host "Importing Inventory database from $ticketPath"
-                        Get-Process -Name "$InventoryProcess" | Stop-Process
-                        Get-Service -Name "$InventoryService" | Stop-Service
+                        Get-Process -Name "$InventoryProcess" | Stop-Process -ErrorAction SilentlyContinue
+                        Get-Service -Name "$InventoryService" | Stop-Service -ErrorAction SilentlyContinue
                         Rename-Item -Path "$Destination\$StandardDBName" -NewName $BackupDBName
-                        Copy-Item -Path $ticketPath -Destination $Destination -PassThru
-                        Get-Service -Name "$InventoryService" | Start-Service
+                        Copy-Item -Path $ticketPath -Destination $Destination
+                        Get-Service -Name "$InventoryService" | Start-Service -ErrorAction SilentlyContinue
                         Start-Process -FilePath "C:\Program Files (x86)\Admin Arsenal\PDQ Inventory\PDQInventoryConsole.exe"
                         Write-Host "New database imported."
+                        cls
                     } '3' {
                         $DestinationD = "$LocalPDQfolder\$DeployDB"
                         $DestinationI = "$LocalPDQfolder\$InventoryDB"
@@ -122,7 +123,7 @@ while ($Loop) {
                 }
                 pause
             }
-            until ($input -eq 'q')
+            until ($PickProduct -eq 'q')
         }
             
     while ( $ConfirmEntry -ne 'y' -and $ConfirmEntry -ne "n") {
@@ -132,19 +133,19 @@ while ($Loop) {
     if ($ConfirmEntry -eq 'y') {
         Write-Host "Restoring original database"
         if ($Switch -eq "1") {
-            Get-Process -Name "$DeployProcess" | Stop-Process
-            Get-Service -Name "$DeployService" | Stop-Service
+            Get-Process -Name "$DeployProcess" | Stop-Process -ErrorAction SilentlyContinue
+            Get-Service -Name "$DeployService" | Stop-Service -ErrorAction SilentlyContinue
             Remove-Item -Path "$Destination\$StandardDBName"
             Rename-Item -Path "$Destination\$BackupDBName" -NewName $StandardDBName
-            Get-Service -Name "$DeployService" | Start-Service
+            Get-Service -Name "$DeployService" | Start-Service -ErrorAction SilentlyContinue
             Start-Process -FilePath "C:\Program Files (x86)\Admin Arsenal\PDQ Deploy\PDQDeployConsole.exe"
         }
         elseif ($Switch -eq "2") {
-            Get-Process -Name "$InventoryProcess" | Stop-Process
-            Get-Service -Name "$InventoryService" | Stop-Service
+            Get-Process -Name "$InventoryProcess" | Stop-Process -ErrorAction SilentlyContinue
+            Get-Service -Name "$InventoryService" | Stop-Service -ErrorAction SilentlyContinue
             Remove-Item -Path "$Destination\$StandardDBName"
             Rename-Item -Path "$Destination\$BackupDBName" -NewName $StandardDBName
-            Get-Service -Name "$InventoryService" | Start-Service
+            Get-Service -Name "$InventoryService" | Start-Service -ErrorAction SilentlyContinue
             Start-Process -FilePath "C:\Program Files (x86)\Admin Arsenal\PDQ Deploy\PDQInventoryConsole.exe"
         }
         elseif ($Switch -eq "3") {
