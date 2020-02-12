@@ -1,9 +1,21 @@
 <#
 .SYNOPSIS
-    Use the PSWindowsUpdate Powershell module to update 2 custom fields in PDQ Inventory (Last update check/Last update installed)
+    Use the PSWindowsUpdate PowerShell module to update 2 Custom Fields in PDQ Inventory (Last update check/Last update installed).
 .DESCRIPTION
     Update check and install times are not reported within Windows anywhere that is easily found. The closest option is the date(s) of the last installed hotfix, which is inaccurate at best.
-    Using the PSWindowsUpdate Powershell module, we are able to leverage it to update custom fields in Inventory - fields which can then be used as filters and reported on.
+    Using the PSWindowsUpdate PowerShell module, we are able to leverage it to update Custom Fields in Inventory - fields which can then be used as filters and reported on.
+.PARAMETER Days
+    The number of days since the last update check and last installed update that you want as your threshold.
+    Defaults to 30.
+.PARAMETER ServerHostName
+    The hostname of the computer that you have PDQ Inventory installed on. This script will use Invoke-Command to connect to the specificed hostname.
+    Defaults to "PDQSERVER".
+.PARAMETER CustomFieldLastUpdateCheck
+    The name of the Custom Field that stores whether or not the number of days since the last time the target checked for updates is greater than the number of days specified by -Days.
+    Defaults to "Last Update Check Older Than $Days Days".
+.PARAMETER CustomFieldLastUpdateInstalled
+    The name of the Custom Field that stores whether or not the number of days since the last time the target installed updates is greater than the number of days specified by -Days.
+    Defaults to "Last Update Installed Over $Days Days Ago".
 .EXAMPLE
     I have typically had this as a Tool in Inventory that I could run on-demand as needed (as well as remove possible conflicts with how Inventory handles running scripts vs how Deploy does it),
     but there is no reason you could not create a package in Deploy and schedule it if desired. Just be sure to test thoroughly.
@@ -17,40 +29,41 @@
     
     In this example the Custom Fields were created as a True/False (checkbox) type. If you want to use another type (integer for example),
     you'll need to change $Checked and $Installed to be set to your desired data type.
-
 #>
 
-$Days = 30
-$time = (Get-Date).Adddays( - ($Days))
+[CmdletBinding()]
+param (
+    [ValidateNotNullOrEmpty()]    
+    [int32]
+    $Days = 30,
 
-$CustomFieldName1 = "Last Update Check older than 30 days"
-$CustomFieldName2 = "Last Update Installed Over 30 Days Ago"
-$ComputerName = $env:COMPUTERNAME
+    [ValidateNotNullOrEmpty()]
+    [string]
+    $ServerHostName = "PDQSERVER",
 
-$CheckedDate = Get-WULastScanSuccessDate
+    [ValidateNotNullOrEmpty()]
+    [string]
+    $CustomFieldLastUpdateCheck = "Last Update Check Older Than $Days Days",
+
+    [ValidateNotNullOrEmpty()]
+    [string]
+    $CustomFieldLastUpdateInstalled = "Last Update Installed Over $Days Days Ago"
+)
+
+$Time = (Get-Date).Adddays(- $Days)
+
+$CheckedDate   = Get-WULastScanSuccessDate
 $InstalledDate = Get-WULastInstallationDate
 
-[array]$CustomInfo = "Computer Name,$CustomFieldName1,$CustomFieldName2"
+[array]$CustomInfo = "Computer Name,$CustomFieldLastUpdateCheck,$CustomFieldLastUpdateInstalled"
 
-if (($CheckedDate -gt $time) -eq $false) {
-    $Checked = "True"
-}
-else {
-    $Checked = "False"
-}
+$Checked   = $CheckedDate   -lt $Time
+$Installed = $InstalledDate -lt $Time
 
-if (($InstalledDate -gt $time) -eq $false) {
-    $Installed = "True"
-}
-else {
-    $Installed = "False"
-}
+$CustomInfo += "$env:COMPUTERNAME,$Checked,$Installed"
 
-$ComputerName | ForEach-Object {
-    $CustomInfo += "$_,$Checked,$Installed"
+Invoke-Command -ComputerName $ServerHostName -ScriptBlock { 
+    $TempFile = New-TemporaryFile
+    $Using:CustomInfo | Out-File $TempFile
+    PDQInventory ImportCustomFields -FileName $TempFile.FullName -AllowOverwrite
 }
-
-Invoke-Command -ComputerName PDQSERVER -ScriptBlock { 
-    ($TempFile = New-TemporaryFile) 
-    ($Using:CustomInfo | Out-File $TempFile) 
-    (PDQInventory ImportCustomFields -FileName $TempFile.FullName -AllowOverwrite) }
